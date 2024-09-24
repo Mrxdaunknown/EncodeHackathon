@@ -12,13 +12,36 @@
  * @default 1
  * @type variable
  *
- * @help This plugin allows to connect your browser deployed RPG to a 
- * MetaMask wallet. 
- * In an event, use the following script call to initiate the MetaMask connection:
+ * @param Token Contract Address
+ * @desc The contract address of the token the player should send.
+ * Must be a token using 18 decimals.
+ * @type string
+ * @default 0x1CE16390FD09040486221e912B87551E4e44Ab17
+ * 
+ * @param Recipient Wallet Address
+ * @desc The address to send the players tokens to.
+ * "Your wallet address" if you want to earn with your game.
+ * @type string
+ * @default 0x4c1f0D4b26019eC365a50f98D21efE682f70ab36
+ * 
+ * @help This plugin allows to connect your browser-deployed RPG to a MetaMask wallet.
+ * 
+ * In an event use the following script call to initiate the MetaMask connection:
  * this.pluginCommand_iniweb3();
  * 
+ * In Plugin Parameters you can change the variable which is storing the 
+ * connected MetaMask wallet address. By default its variable 1.
+ * 
+ * ------ 2nd plugin part (sending tokens and player receiving gold) ------
+ *
  * In an event, use the following script call to send the tokens:
  * this.pluginCommand_sendwgas();
+ * 
+ * In Plugin Parameters you can change:
+ * The Token Contract Address (You can decide which token the player should send)
+ * It must be a token with 18 decimals. USDT for example is using 6 decimals and
+ * would not work.
+ * The Recipient Wallet Address (Your wallet which should receive the tokens)
  * 
  * [Terms of Use] 
  * MIT License: Free for commercial and non-commercial use
@@ -60,610 +83,32 @@
   };
 })();
 
-
+// Second plugin part
 const contractABI = [
-  {
-      "inputs": [],
-      "stateMutability": "nonpayable",
-      "type": "constructor"
-  },
-  {
-      "anonymous": false,
-      "inputs": [
-          {
-              "indexed": true,
-              "internalType": "address",
-              "name": "owner",
-              "type": "address"
-          },
-          {
-              "indexed": true,
-              "internalType": "address",
-              "name": "spender",
-              "type": "address"
-          },
-          {
-              "indexed": false,
-              "internalType": "uint256",
-              "name": "value",
-              "type": "uint256"
-          }
-      ],
-      "name": "Approval",
-      "type": "event"
-  },
-  {
-      "anonymous": false,
-      "inputs": [
-          {
-              "indexed": true,
-              "internalType": "address",
-              "name": "from",
-              "type": "address"
-          },
-          {
-              "indexed": true,
-              "internalType": "address",
-              "name": "to",
-              "type": "address"
-          },
-          {
-              "indexed": false,
-              "internalType": "uint256",
-              "name": "value",
-              "type": "uint256"
-          }
-      ],
-      "name": "Transfer",
-      "type": "event"
-  },
-  {
-      "inputs": [],
-      "name": "CALLBACK_SUCCESS",
-      "outputs": [
-          {
-              "internalType": "bytes32",
-              "name": "",
-              "type": "bytes32"
-          }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-  },
-  {
-      "inputs": [],
-      "name": "DOMAIN_SEPARATOR",
-      "outputs": [
-          {
-              "internalType": "bytes32",
-              "name": "",
-              "type": "bytes32"
-          }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-  },
-  {
-      "inputs": [],
-      "name": "PERMIT_TYPEHASH",
-      "outputs": [
-          {
-              "internalType": "bytes32",
-              "name": "",
-              "type": "bytes32"
-          }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-  },
-  {
-      "inputs": [
-          {
-              "internalType": "address",
-              "name": "",
-              "type": "address"
-          },
-          {
-              "internalType": "address",
-              "name": "",
-              "type": "address"
-          }
-      ],
-      "name": "allowance",
-      "outputs": [
-          {
-              "internalType": "uint256",
-              "name": "",
-              "type": "uint256"
-          }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-  },
-  {
-      "inputs": [
-          {
-              "internalType": "address",
-              "name": "spender",
-              "type": "address"
-          },
-          {
-              "internalType": "uint256",
-              "name": "value",
-              "type": "uint256"
-          }
-      ],
-      "name": "approve",
-      "outputs": [
-          {
-              "internalType": "bool",
-              "name": "",
-              "type": "bool"
-          }
-      ],
-      "stateMutability": "nonpayable",
-      "type": "function"
-  },
-  {
-      "inputs": [
-          {
-              "internalType": "address",
-              "name": "spender",
-              "type": "address"
-          },
-          {
-              "internalType": "uint256",
-              "name": "value",
-              "type": "uint256"
-          },
-          {
-              "internalType": "bytes",
-              "name": "data",
-              "type": "bytes"
-          }
-      ],
-      "name": "approveAndCall",
-      "outputs": [
-          {
-              "internalType": "bool",
-              "name": "",
-              "type": "bool"
-          }
-      ],
-      "stateMutability": "nonpayable",
-      "type": "function"
-  },
-  {
-      "inputs": [
-          {
-              "internalType": "address",
-              "name": "",
-              "type": "address"
-          }
-      ],
-      "name": "balanceOf",
-      "outputs": [
-          {
-              "internalType": "uint256",
-              "name": "",
-              "type": "uint256"
-          }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-  },
-  {
-      "inputs": [],
-      "name": "decimals",
-      "outputs": [
-          {
-              "internalType": "uint8",
-              "name": "",
-              "type": "uint8"
-          }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-  },
-  {
-      "inputs": [],
-      "name": "deploymentChainId",
-      "outputs": [
-          {
-              "internalType": "uint256",
-              "name": "",
-              "type": "uint256"
-          }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-  },
-  {
-      "inputs": [],
-      "name": "deposit",
-      "outputs": [],
-      "stateMutability": "payable",
-      "type": "function"
-  },
-  {
-      "inputs": [
-          {
-              "internalType": "address",
-              "name": "to",
-              "type": "address"
-          }
-      ],
-      "name": "depositTo",
-      "outputs": [],
-      "stateMutability": "payable",
-      "type": "function"
-  },
-  {
-      "inputs": [
-          {
-              "internalType": "address",
-              "name": "to",
-              "type": "address"
-          },
-          {
-              "internalType": "bytes",
-              "name": "data",
-              "type": "bytes"
-          }
-      ],
-      "name": "depositToAndCall",
-      "outputs": [
-          {
-              "internalType": "bool",
-              "name": "success",
-              "type": "bool"
-          }
-      ],
-      "stateMutability": "payable",
-      "type": "function"
-  },
-  {
-      "inputs": [
-          {
-              "internalType": "address",
-              "name": "token",
-              "type": "address"
-          },
-          {
-              "internalType": "uint256",
-              "name": "",
-              "type": "uint256"
-          }
-      ],
-      "name": "flashFee",
-      "outputs": [
-          {
-              "internalType": "uint256",
-              "name": "",
-              "type": "uint256"
-          }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-  },
-  {
-      "inputs": [
-          {
-              "internalType": "contract IERC3156FlashBorrower",
-              "name": "receiver",
-              "type": "address"
-          },
-          {
-              "internalType": "address",
-              "name": "token",
-              "type": "address"
-          },
-          {
-              "internalType": "uint256",
-              "name": "value",
-              "type": "uint256"
-          },
-          {
-              "internalType": "bytes",
-              "name": "data",
-              "type": "bytes"
-          }
-      ],
-      "name": "flashLoan",
-      "outputs": [
-          {
-              "internalType": "bool",
-              "name": "",
-              "type": "bool"
-          }
-      ],
-      "stateMutability": "nonpayable",
-      "type": "function"
-  },
-  {
-      "inputs": [],
-      "name": "flashMinted",
-      "outputs": [
-          {
-              "internalType": "uint256",
-              "name": "",
-              "type": "uint256"
-          }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-  },
-  {
-      "inputs": [
-          {
-              "internalType": "address",
-              "name": "token",
-              "type": "address"
-          }
-      ],
-      "name": "maxFlashLoan",
-      "outputs": [
-          {
-              "internalType": "uint256",
-              "name": "",
-              "type": "uint256"
-          }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-  },
-  {
-      "inputs": [],
-      "name": "name",
-      "outputs": [
-          {
-              "internalType": "string",
-              "name": "",
-              "type": "string"
-          }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-  },
-  {
-      "inputs": [
-          {
-              "internalType": "address",
-              "name": "",
-              "type": "address"
-          }
-      ],
-      "name": "nonces",
-      "outputs": [
-          {
-              "internalType": "uint256",
-              "name": "",
-              "type": "uint256"
-          }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-  },
-  {
-      "inputs": [
-          {
-              "internalType": "address",
-              "name": "owner",
-              "type": "address"
-          },
-          {
-              "internalType": "address",
-              "name": "spender",
-              "type": "address"
-          },
-          {
-              "internalType": "uint256",
-              "name": "value",
-              "type": "uint256"
-          },
-          {
-              "internalType": "uint256",
-              "name": "deadline",
-              "type": "uint256"
-          },
-          {
-              "internalType": "uint8",
-              "name": "v",
-              "type": "uint8"
-          },
-          {
-              "internalType": "bytes32",
-              "name": "r",
-              "type": "bytes32"
-          },
-          {
-              "internalType": "bytes32",
-              "name": "s",
-              "type": "bytes32"
-          }
-      ],
-      "name": "permit",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-  },
-  {
-      "inputs": [],
-      "name": "symbol",
-      "outputs": [
-          {
-              "internalType": "string",
-              "name": "",
-              "type": "string"
-          }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-  },
-  {
-      "inputs": [],
-      "name": "totalSupply",
-      "outputs": [
-          {
-              "internalType": "uint256",
-              "name": "",
-              "type": "uint256"
-          }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-  },
-  {
-      "inputs": [
-          {
-              "internalType": "address",
-              "name": "to",
-              "type": "address"
-          },
-          {
-              "internalType": "uint256",
-              "name": "value",
-              "type": "uint256"
-          }
-      ],
-      "name": "transfer",
-      "outputs": [
-          {
-              "internalType": "bool",
-              "name": "",
-              "type": "bool"
-          }
-      ],
-      "stateMutability": "nonpayable",
-      "type": "function"
-  },
-  {
-      "inputs": [
-          {
-              "internalType": "address",
-              "name": "to",
-              "type": "address"
-          },
-          {
-              "internalType": "uint256",
-              "name": "value",
-              "type": "uint256"
-          },
-          {
-              "internalType": "bytes",
-              "name": "data",
-              "type": "bytes"
-          }
-      ],
-      "name": "transferAndCall",
-      "outputs": [
-          {
-              "internalType": "bool",
-              "name": "",
-              "type": "bool"
-          }
-      ],
-      "stateMutability": "nonpayable",
-      "type": "function"
-  },
-  {
-      "inputs": [
-          {
-              "internalType": "address",
-              "name": "from",
-              "type": "address"
-          },
-          {
-              "internalType": "address",
-              "name": "to",
-              "type": "address"
-          },
-          {
-              "internalType": "uint256",
-              "name": "value",
-              "type": "uint256"
-          }
-      ],
-      "name": "transferFrom",
-      "outputs": [
-          {
-              "internalType": "bool",
-              "name": "",
-              "type": "bool"
-          }
-      ],
-      "stateMutability": "nonpayable",
-      "type": "function"
-  },
-  {
-      "inputs": [
-          {
-              "internalType": "uint256",
-              "name": "value",
-              "type": "uint256"
-          }
-      ],
-      "name": "withdraw",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-  },
-  {
-      "inputs": [
-          {
-              "internalType": "address",
-              "name": "from",
-              "type": "address"
-          },
-          {
-              "internalType": "address payable",
-              "name": "to",
-              "type": "address"
-          },
-          {
-              "internalType": "uint256",
-              "name": "value",
-              "type": "uint256"
-          }
-      ],
-      "name": "withdrawFrom",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-  },
-  {
-      "inputs": [
-          {
-              "internalType": "address payable",
-              "name": "to",
-              "type": "address"
-          },
-          {
-              "internalType": "uint256",
-              "name": "value",
-              "type": "uint256"
-          }
-      ],
-      "name": "withdrawTo",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-  },
-  {
-      "stateMutability": "payable",
-      "type": "receive"
-  }
+    {
+        "constant": false,
+        "inputs": [
+            { "name": "_to", "type": "address" },
+            { "name": "_value", "type": "uint256" }
+        ],
+        "name": "transfer",
+        "outputs": [{ "name": "", "type": "bool" }],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
+    }
 ];
-const tokenAddress = "0x1CE16390FD09040486221e912B87551E4e44Ab17";
+(() => {
+    var parameters = PluginManager.parameters("MetaMask_Init");
+    var tokenAddress = parameters["Token Contract Address"] || "0x1CE16390FD09040486221e912B87551E4e44Ab17";
+    var recipient = parameters["Recipient Wallet Address"] || "0x4c1f0D4b26019eC365a50f98D21efE682f70ab36"; 
 async function sendToken() {
   try {
-    const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+    const accounts = await ethereum.request({ method: "eth_requestAccounts" });
     const sender = accounts[0];
-    const recipient = "0x4c1f0D4b26019eC365a50f98D21efE682f70ab36";
     const tokenAmount = 0.1;
-    const decimals = 18;
     const weiAmount = web3.utils.toWei(tokenAmount.toString(), "ether"); 
-    // Ether means 18 decimal points
+    // "Ether" means 18 decimal points
 
     const tokenContract = new web3.eth.Contract(contractABI, tokenAddress);
     const gasPrice = await web3.eth.getGasPrice();
@@ -672,20 +117,33 @@ async function sendToken() {
     const gasEstimate = await tokenContract.methods.transfer(recipient, weiAmount).estimateGas({ from: sender });
     console.log("Estimated Gas:", gasEstimate);
 
-    const tx = await tokenContract.methods.transfer(recipient, weiAmount)
+    tokenContract.methods.transfer(recipient, weiAmount)
       .send({
         from: sender,
         gas: gasEstimate,
         gasPrice: gasPrice
+      })
+      .on("transactionHash", function(hash) {
+        console.log("Transaction hash:", hash);
+        $gameMessage.add("Transaction sent! Tx hash:\n" + hash);
+      })
+      .on("receipt", function(receipt) {
+        console.log("Transaction receipt:", receipt);
+        $gameMessage.add("Transaction confirmed! Tx hash:\n" + receipt.transactionHash);
+        const goldAmount = 1000;
+        $gameParty.gainGold(goldAmount);
+        $gameMessage.add("You have received " + goldAmount + " Gold!");
+      })
+      .on("error", function(error) {
+        console.error("Transaction failed:", error);
+        $gameMessage.add("Transaction failed!");
       });
-    
-    console.log("Transaction Hash:", tx.transactionHash);
-    $gameMessage.add("Transaction Successful! Tx Hash:\n" + tx.transactionHash);
   } catch (error) {
-    console.error("Transaction Failed:", error);
-    $gameMessage.add("Transaction Failed!");
+    console.error("MetaMask connection failed:", error);
+    $gameMessage.add("MetaMask connection failed!");
   }
 }
 Game_Interpreter.prototype.pluginCommand_sendwgas = function() {
   sendToken();
-}
+};
+})();

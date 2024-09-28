@@ -1,9 +1,10 @@
 //----------------------------------------------------------------------------------------------------------------------
 //MetaMask_Init.js
 //----------------------------------------------------------------------------------------------------------------------
-// v1.0 (23.09.2024) - release
+// v1.0 (29.09.2024) - first release
 /*:
  * @plugindesc This plugin allows to connect your RPG to a MetaMask wallet.
+ * It also allows to send gold to the player in exchange for tokens.
  * @author FrankCoin
  * @target MV
  *
@@ -16,13 +17,24 @@
  * @desc The contract address of the token the player should send.
  * Must be a token using 18 decimals.
  * @type string
- * @default 0x1CE16390FD09040486221e912B87551E4e44Ab17
+ * @default 0xdE41591ED1f8ED1484aC2CD8ca0876428de60EfF
  * 
  * @param Recipient Wallet Address
  * @desc The address to send the players tokens to.
  * "Your wallet address" if you want to earn with your game.
  * @type string
  * @default 0x4c1f0D4b26019eC365a50f98D21efE682f70ab36
+ * 
+ * @param Gold Amount
+ * @desc The gold amount a player will receive for their tokens 
+ * after a successful transaction.
+ * @type number
+ * @default 1000
+ * 
+ * @param Token Amount
+ * @desc The token amount a player needs to send to receive the gold amount.
+ * @type text
+ * @default 0.1
  * 
  * @help This plugin allows to connect your browser-deployed RPG to a MetaMask wallet.
  * 
@@ -32,16 +44,25 @@
  * In Plugin Parameters you can change the variable which is storing the 
  * connected MetaMask wallet address. By default its variable 1.
  * 
- * ------ 2nd plugin part (sending tokens and player receiving gold) ------
+ * ----- 2nd plugin part (sending ERC20-tokens and player receiving gold) -----
  *
  * In an event, use the following script call to send the tokens:
- * this.pluginCommand_sendwgas();
+ * this.pluginCommand_sendtokens();
  * 
  * In Plugin Parameters you can change:
  * The Token Contract Address (You can decide which token the player should send)
  * It must be a token with 18 decimals. USDT for example is using 6 decimals and
- * would not work.
+ * would not work. Also it must be a ERC20-token!
+ * By default its the contract of WGAS10 for the Neo X blockchain.
+ * 
  * The Recipient Wallet Address (Your wallet which should receive the tokens)
+ * By default its my wallet address :).
+ * 
+ * The Gold Amount the player will receive for their tokens after a transaction.
+ * By default its 1000 gold.
+ * 
+ * The Token Amount the player needs to send to receive the gold amount.
+ * By default its 0.1 token.
  * 
  * [Terms of Use] 
  * MIT License: Free for commercial and non-commercial use
@@ -100,13 +121,14 @@ const contractABI = [
 ];
 (() => {
     var parameters = PluginManager.parameters("MetaMask_Init");
-    var tokenAddress = parameters["Token Contract Address"] || "0x1CE16390FD09040486221e912B87551E4e44Ab17";
+    var tokenAddress = parameters["Token Contract Address"] || "0xdE41591ED1f8ED1484aC2CD8ca0876428de60EfF";
     var recipient = parameters["Recipient Wallet Address"] || "0x4c1f0D4b26019eC365a50f98D21efE682f70ab36"; 
-async function sendToken() {
+    var goldAmount = Number(parameters["Gold Amount"] || 1000);
+    var tokenAmount = parseFloat(parameters["Token Amount"] || 0.1);
+async function send() {
   try {
     const accounts = await ethereum.request({ method: "eth_requestAccounts" });
     const sender = accounts[0];
-    const tokenAmount = 0.1;
     const weiAmount = web3.utils.toWei(tokenAmount.toString(), "ether"); 
     // "Ether" means 18 decimal points
 
@@ -130,7 +152,6 @@ async function sendToken() {
       .on("receipt", function(receipt) {
         console.log("Transaction receipt:", receipt);
         $gameMessage.add("Transaction confirmed! Tx hash:\n" + receipt.transactionHash);
-        const goldAmount = 1000;
         $gameParty.gainGold(goldAmount);
         $gameMessage.add("You have received " + goldAmount + " Gold!");
       })
@@ -143,7 +164,7 @@ async function sendToken() {
     $gameMessage.add("MetaMask connection failed!");
   }
 }
-Game_Interpreter.prototype.pluginCommand_sendwgas = function() {
-  sendToken();
+Game_Interpreter.prototype.pluginCommand_sendtokens = function() {
+  send();
 };
 })();

@@ -34,6 +34,8 @@ https://worldofelements.itch.io/metamask-login
 
 ![image](https://github.com/user-attachments/assets/275c05ce-68a7-4b63-8ac5-a76024fb2cb9)
 
+![image](https://github.com/user-attachments/assets/3d2df154-563e-484a-9f57-23d2936e321a)
+
 **Possible Questions:**
 - Do I need to download anything else?
 

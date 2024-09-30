@@ -11,7 +11,11 @@ It allows players to **connect a MetaMask wallet to a browser-deployed RPG**. Ad
 
 Download Link: https://github.com/Mrxdaunknown/EncodeHackathon/blob/main/js/plugins/Metamask_Init.js
 
-Playable Demo Link https://worldofelements.itch.io/metamask-login
+**Playable Demo Links:** 
+
+https://worldofelements.de/
+
+https://worldofelements.itch.io/metamask-login
 
 **In Detail:**
 
